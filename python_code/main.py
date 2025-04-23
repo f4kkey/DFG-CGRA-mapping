@@ -4,10 +4,10 @@ from pysat.solvers import Cadical103
 from pypblib import pblib
 pb2 = pblib.Pb2cnf()
 from typing import List
-from docplex.mp.model import Model
 import math
 import graph
 import dfg
+import maxsat
 import time
 import copy
 nvars = 0
@@ -20,6 +20,8 @@ ncycles = 0
 tempnodes = False
 finterpret = True
 freduce = True
+fmaxsat = False
+var = {}
 
 def add_clause(clause: list):
     global all_clauses,solver
@@ -411,7 +413,7 @@ def increment(X: List[List[List[int]]], Y: List[List[List[int]]], edges_cgra : L
         solver.solve()  
 
 def solve_mapping(num_cycles: int, nregs :int , nopes: int):
-    global all_clauses, nvars, ncycles
+    global all_clauses, nvars, ncycles, var
     all_clauses = []
     nvars = 0 
     ncycles = num_cycles
@@ -430,14 +432,66 @@ def solve_mapping(num_cycles: int, nregs :int , nopes: int):
     add_block_constraints(P, Q, X, Y)
     add_control_signal_capacity(Q)
     add_capacity_constraints(X, Y, Z, nregs, nopes)
-    
+    setup_time = time.time() - start_time
+    print(f"Setup time: {setup_time:.3f} seconds")
     def print_clauses():
         global solver
         for clause in all_clauses:
             print(clause)
     
-    setup_time = time.time() - start_time
-    print(f"Setup time: {setup_time:.3f} seconds")
+    if fmaxsat:
+        hard_clauses = all_clauses
+        soft_clauses = []
+        for j in CGRA.get_pes():
+            nvars += 1
+            for k in range(ncycles):
+                for i in range(DFG.get_ndata()):
+                    hard_clauses.append([-nvars, -X[i][j][k]])   
+            soft_clauses.append((1,[nvars]))
+            var[j] = nvars
+        
+        for h in range(len(CGRA.get_edges())):
+            nvars += 1
+            for k in range(ncycles):
+                for i in range(DFG.get_ndata()):
+                    hard_clauses.append([-nvars, -Y[i][h][k]])   
+            soft_clauses.append((1,[nvars]))
+            var[CGRA.nnodes + h] = nvars    
+        
+        solve_start = time.time()
+        output = maxsat.MaxSAT(hard_clauses, soft_clauses)
+        solve_time = time.time() - solve_start
+        
+        for line in output.split('\n'):
+            if line.startswith('v '):
+                print(f"Found solution line: {line[:50]}...")
+                binary_string = line[2:].strip()
+                true_vars = set()
+                if " " in binary_string:
+                    try:
+                        for val in binary_string.split():
+                            val_int = int(val)
+                            if val_int > 0:  # Positive literals represent true variables
+                                true_vars.add(val_int)
+                    except ValueError:
+                        # Not integers, try as space-separated binary values
+                        for i, val in enumerate(binary_string.split()):
+                            if val == '1':
+                                true_vars.add(i + 1)  # 1-indexed
+                else:
+                    # No spaces - treat as continuous binary string
+                    for i, val in enumerate(binary_string):
+                        if val == '1':
+                            true_vars.add(i + 1)  # 1-indexed
+                for j in CGRA.get_pes():
+                    if j in var and var[j] in true_vars:
+                        print(f"Component {j} is removed")     
+                for h in range(len(CGRA.get_edges())):
+                    if CGRA.nnodes + h in var and var[CGRA.nnodes + h] in true_vars:
+                        print(f"Remove edge {h} from {CGRA.get_edges()[h][0]} to {CGRA.get_edges()[h][1]} is removed")
+        print(f"MaxSAT solving time: {solve_time:.3f} seconds")
+        return
+    
     print(f"Number of variables: {nvars}")
     print(f"Number of clauses: {len(all_clauses)}")
     
@@ -448,15 +502,16 @@ def solve_mapping(num_cycles: int, nregs :int , nopes: int):
     
     if sat:
         print("SAT")
-        model = solver.get_model()
-        if finterpret:
-            interpret_solution(model, X, Y, Z)
+        model = solver.get_model()        
         if(fincrement):
             increment_time_start = time.time()
             print("Incremental solving")
-            increment(X, Y, edges_cgra)
+            increment(X, Y)
             increment_time = time.time() - increment_time_start
             print(f"Incremental solving time: {increment_time:.3f} seconds")
+        if finterpret:
+            model = solver.get_model()
+            interpret_solution(model, X, Y, Z)
     else:
         print("UNSAT")
         
@@ -664,8 +719,6 @@ def interpret_solution(model: List[int], X: List[List[List[int]]], Y: List[List[
                       Z: List[List[List[int]]]):
 
     # read model
-
-    result = [[] for _ in range(ncycles)]
     model_set = set(abs(x) for x in model if x > 0)
     image = [[[] for _ in range(len(CGRA.get_edges()) + CGRA.get_nnodes()) ] for _ in range(ncycles)]
     
@@ -683,7 +736,6 @@ def interpret_solution(model: List[int], X: List[List[List[int]]], Y: List[List[
     for k in range(ncycles):
         print(f"\nCycle {k}:")
         for j in range(len(CGRA.get_edges())):
-            
             for i in image[k][CGRA.nnodes+j]:
                 print(f"node {i} is communicated in path {j} from component {CGRA.get_edges()[j][0]} to component {CGRA.get_edges()[j][1]}")
         for j in range(CGRA.get_nnodes()):
@@ -691,39 +743,39 @@ def interpret_solution(model: List[int], X: List[List[List[int]]], Y: List[List[
             for i in image[k][j]:
                 print(f"node {i} exists in component {j}")
                 
-                
+def increment(X, Y):
+    for j in CGRA.get_pes():
+        assumptions = []
+        for k in range(ncycles):
+            for i in range(DFG.get_ndata()):
+                assumptions.append(-X[i][j][k])
+        check = solver.solve(assumptions=assumptions)
+        if check:
+            print('remove component', j)
+            for assumption in assumptions:
+                solver.add_clause([assumption])     
+        solver.solve()   
     
-    """
-    for k in range(ncycles):
-        for i in range(DFG.get_ndata()):
-            for h in range(len(CGRA.get_edges())):
-                # print(f'Y{i}{h}{k}')
-                if Y[i][h][k] in model_set:
-                    result[k].append(f"node {i} is communicated in path {h} from component {CGRA.get_edges()[h][0]} to component {CGRA.get_edges()[h][1]} at cycle {k}")
-        
-        for i in range(DFG.get_ndata()):
-            for j in range(CGRA.get_nnodes()):
-                if Z[i][j][k] in model_set:
-                    result[k].append(f"node {i} is calculated in component {j} at cycle {k}")
-        
-        for i in range(DFG.get_ndata()):
-            for j in range(CGRA.get_nnodes()):
-                if X[i][j][k] in model_set:
-                    # cnt += 1
-                    result[k].append(f"node {i} exists in component {j} at cycle {k}")
-    for k in range(len(result)):
-        print(f"\nCycle {k}:")
-        for line in result[k]:
-            print(line)
-    """
+    for h in range(len(CGRA.get_edges())):
+        assumptions = []
+        for k in range(ncycles):
+            for i in range(DFG.get_ndata()):
+                assumptions.append(-Y[i][h][k])
+        check = solver.solve(assumptions=assumptions)
+        if check:
+            print('remove edge', h, 'from', CGRA.get_edges()[h][0], 'to', CGRA.get_edges()[h][1])
+            for assumption in assumptions:
+                solver.add_clause([assumption])     
+        solver.solve()
 
 def main():
-    global fincrement, solver, CGRA, DFG, fincrement, finterpret, freduce
-    fincrement = False
+    global fincrement, solver, CGRA, DFG, fincrement, finterpret, freduce, fmaxsat
+    fincrement = True
     finterpret = False
     freduce = True
-    # solver = Glucose4(incr=fincrement)
-    solver = Cadical103()
+    fmaxsat = False
+    solver = Glucose4(incr=fincrement)
+    # solver = Cadical103()
     # Read CGRA architecture
     CGRA = graph.Graph()
     CGRA.create_node("mem", "_extmem")
@@ -737,7 +789,7 @@ def main():
     # DFG.insert_xbtree()
     MAC = True
     DFG.gen_operands(MAC,True)
-    solve_mapping(num_cycles = 6 , nregs = 2 , nopes= 1)
+    solve_mapping(num_cycles = 52 , nregs = 2 , nopes= 1)
 
 if __name__ == "__main__":
     main()

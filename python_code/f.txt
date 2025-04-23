@@ -1,12 +1,157 @@
-.i x1 x2 x3 x4 w1_1 w1_2 w1_3 w1_4 w2_1 w2_2 w2_3 w2_4 w3_1 w3_2 w3_3 w3_4 w4_1 w4_2 w4_3 w4_4
-.o y1 y2 y3 y4
+.i input
+.o output
 .f
-+ 2 c a
-* 2 c a
-.m
-+ _ * _ _
+addshift0 1
+keysub 1
+keysche 1
+sub0 1
+sub1 1
+sub2 1
+sub3 1
+mix0 1
+mix1 1
+mix2 1
+mix3 1
+merge0 2
+merge1 2
+merge2 2
+addshift 2
+addkey 2
 .n
-y1 + * x4 w1_4 + * x3 w1_3 + * x2 w1_2 * x1 w1_1
-y2 + * x4 w2_4 + * x3 w2_3 + * x2 w2_2 * x1 w2_1
-y3 + * x4 w3_4 + * x3 w3_3 + * x2 w3_2 * x1 w3_1
-y4 + * x4 w4_4 + * x3 w4_3 + * x2 w4_2 * x1 w4_1
+n_0_1 addshift0 input
+n_0_2 keysub n_0_1
+n_0_3 sub2 n_0_1
+n_0_4 sub3 n_0_1
+n_0_5 sub1 n_0_1
+n_0_6 sub0 n_0_1
+n_0_7 keysche n_0_2
+n_0_8 mix2 n_0_3
+n_0_9 mix3 n_0_4
+n_0_10 mix1 n_0_5
+n_0_11 mix0 n_0_6
+n_0_12 merge1 n_0_8 n_0_9
+n_0_13 merge0 n_0_10 n_0_11
+n_0_14 merge2 n_0_12 n_0_13
+n_1_1 addshift n_0_7 n_0_14
+n_1_2 keysub n_1_1
+n_1_3 sub2 n_1_1
+n_1_4 sub3 n_1_1
+n_1_5 sub1 n_1_1
+n_1_6 sub0 n_1_1
+n_1_7 keysche n_1_2
+n_1_8 mix2 n_1_3
+n_1_9 mix3 n_1_4
+n_1_10 mix1 n_1_5
+n_1_11 mix0 n_1_6
+n_1_12 merge1 n_1_8 n_1_9
+n_1_13 merge0 n_1_10 n_1_11
+n_1_14 merge2 n_1_12 n_1_13
+n_2_1 addshift n_1_7 n_1_14
+n_2_2 keysub n_2_1
+n_2_3 sub2 n_2_1
+n_2_4 sub3 n_2_1
+n_2_5 sub1 n_2_1
+n_2_6 sub0 n_2_1
+n_2_7 keysche n_2_2
+n_2_8 mix2 n_2_3
+n_2_9 mix3 n_2_4
+n_2_10 mix1 n_2_5
+n_2_11 mix0 n_2_6
+n_2_12 merge1 n_2_8 n_2_9
+n_2_13 merge0 n_2_10 n_2_11
+n_2_14 merge2 n_2_12 n_2_13
+n_3_1 addshift n_2_7 n_2_14
+n_3_2 keysub n_3_1
+n_3_3 sub2 n_3_1
+n_3_4 sub3 n_3_1
+n_3_5 sub1 n_3_1
+n_3_6 sub0 n_3_1
+n_3_7 keysche n_3_2
+n_3_8 mix2 n_3_3
+n_3_9 mix3 n_3_4
+n_3_10 mix1 n_3_5
+n_3_11 mix0 n_3_6
+n_3_12 merge1 n_3_8 n_3_9
+n_3_13 merge0 n_3_10 n_3_11
+n_3_14 merge2 n_3_12 n_3_13
+n_4_1 addshift n_3_7 n_3_14
+n_4_2 keysub n_4_1
+n_4_3 sub2 n_4_1
+n_4_4 sub3 n_4_1
+n_4_5 sub1 n_4_1
+n_4_6 sub0 n_4_1
+n_4_7 keysche n_4_2
+n_4_8 mix2 n_4_3
+n_4_9 mix3 n_4_4
+n_4_10 mix1 n_4_5
+n_4_11 mix0 n_4_6
+n_4_12 merge1 n_4_8 n_4_9
+n_4_13 merge0 n_4_10 n_4_11
+n_4_14 merge2 n_4_12 n_4_13
+n_5_1 addshift n_4_7 n_4_14
+n_5_2 keysub n_5_1
+n_5_3 sub2 n_5_1
+n_5_4 sub3 n_5_1
+n_5_5 sub1 n_5_1
+n_5_6 sub0 n_5_1
+n_5_7 keysche n_5_2
+n_5_8 mix2 n_5_3
+n_5_9 mix3 n_5_4
+n_5_10 mix1 n_5_5
+n_5_11 mix0 n_5_6
+n_5_12 merge1 n_5_8 n_5_9
+n_5_13 merge0 n_5_10 n_5_11
+n_5_14 merge2 n_5_12 n_5_13
+n_6_1 addshift n_5_7 n_5_14
+n_6_2 keysub n_6_1
+n_6_3 sub2 n_6_1
+n_6_4 sub3 n_6_1
+n_6_5 sub1 n_6_1
+n_6_6 sub0 n_6_1
+n_6_7 keysche n_6_2
+n_6_8 mix2 n_6_3
+n_6_9 mix3 n_6_4
+n_6_10 mix1 n_6_5
+n_6_11 mix0 n_6_6
+n_6_12 merge1 n_6_8 n_6_9
+n_6_13 merge0 n_6_10 n_6_11
+n_6_14 merge2 n_6_12 n_6_13
+n_7_1 addshift n_6_7 n_6_14
+n_7_2 keysub n_7_1
+n_7_3 sub2 n_7_1
+n_7_4 sub3 n_7_1
+n_7_5 sub1 n_7_1
+n_7_6 sub0 n_7_1
+n_7_7 keysche n_7_2
+n_7_8 mix2 n_7_3
+n_7_9 mix3 n_7_4
+n_7_10 mix1 n_7_5
+n_7_11 mix0 n_7_6
+n_7_12 merge1 n_7_8 n_7_9
+n_7_13 merge0 n_7_10 n_7_11
+n_7_14 merge2 n_7_12 n_7_13
+n_8_1 addshift n_7_7 n_7_14
+n_8_2 keysub n_8_1
+n_8_3 sub2 n_8_1
+n_8_4 sub3 n_8_1
+n_8_5 sub1 n_8_1
+n_8_6 sub0 n_8_1
+n_8_7 keysche n_8_2
+n_8_8 mix2 n_8_3
+n_8_9 mix3 n_8_4
+n_8_10 mix1 n_8_5
+n_8_11 mix0 n_8_6
+n_8_12 merge1 n_8_8 n_8_9
+n_8_13 merge0 n_8_10 n_8_11
+n_8_14 merge2 n_8_12 n_8_13
+n_9_1 addshift n_8_7 n_8_14
+n_9_2 keysub n_9_1
+n_9_3 sub2 n_9_1
+n_9_4 sub3 n_9_1
+n_9_5 sub1 n_9_1
+n_9_6 sub0 n_9_1
+n_9_7 keysche n_9_2
+n_9_8 merge1 n_9_3 n_9_4
+n_9_9 merge0 n_9_5 n_9_6
+n_9_10 merge2 n_9_8 n_9_9
+output addkey n_9_7 n_9_10
